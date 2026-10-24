@@ -48,7 +48,7 @@ if command -v curl >/dev/null 2>&1; then
 else
 	wget -q "https://github.com/$REPO/archive/refs/heads/$BRANCH.tar.gz" -O "$TARBALL"
 fi
-if tar -xzf "$TARBALL" --warning=no-timestamp --strip-components=1 -C "$TMP/src" 2>"$TMP/tar.err"; then
+if tar -xzf "$TARBALL" --strip-components=1 -C "$TMP/src" 2>"$TMP/tar.err"; then
 	grep -v 'in the future' "$TMP/tar.err" >&2 || true
 else
 	cat "$TMP/tar.err" >&2
