@@ -61,11 +61,7 @@ SRC="$TMP/src"
 if command -v emerge >/dev/null 2>&1; then
 	PKGS="$(grep -Ev '^\s*(#|$)' "$SRC/packages.list" | tr '\n' ' ')"
 	info "emerging: $PKGS"
-	if [ -t 0 ]; then
-		$ESC emerge -av $PKGS
-	else
-		$ESC emerge -v --ask=n $PKGS
-	fi
+	$ESC emerge -v $PKGS
 else
 	warn "skipping package install: emerge not found"
 fi
