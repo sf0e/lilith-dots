@@ -1,0 +1,41 @@
+diff --git a/config/config_keys.h b/config/config_keys.h
+index 06736de..23c7c87 100644
+--- a/config/config_keys.h
++++ b/config/config_keys.h
+@@ -24,10 +24,10 @@
+ #define SHCMD(cmd) { .v = (const char*[]){ "/bin/sh", "-c", cmd, NULL } }
+ 
+ /* Commands started by the bindings below (NULL-terminated argv arrays). */
+-static const char *termcmd[] = { "foot", NULL };  /* terminal */
+-static const char *clockcmd[] ={ "foot", "-a", "clock", "tty-clock", "-sc", "-C", "7", NULL };  /* tty-clock (seconds, centered, color 7) in a terminal with app id "clock" */
+-static const char *wlaunch[] = { "wmenu-run", NULL };  /* application launcher */
+-static const char *btop[]    = { "foot", "btop", NULL };  /* system monitor in a terminal */
++static const char *termcmd[] = { "kitty", NULL };  /* terminal */
++static const char *clockcmd[] ={ "kitty", "--class", "clock", "tty-clock", "-sc", "-C", "7", NULL };  /* tty-clock (seconds, centered, color 7) in a terminal with app id "clock" */
++static const char *wlaunch[] = { "rofi", "-show", "drun", NULL };  /* application launcher */
++static const char *btop[]    = { "kitty", "btop", NULL };  /* system monitor in a terminal */
+ static const char *telegram[]= { "Telegram", NULL };  /* Telegram client */
+ static const char *browser[] = { "firefox", NULL };  /* web browser */
+ static const char *volupcmd[]   = { "wpctl", "set-volume", "-l", "1.0", "@DEFAULT_AUDIO_SINK@", "5%+", NULL };  /* volume +5% (capped at 100%) */
+@@ -42,9 +42,10 @@ static const Key keys[] = {
+ 	{ MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_t,		  spawn,	    {.v = telegram} },  /* Super+Shift+T: open Telegram */
+ 	{ MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_b,		  spawn,	    {.v = btop} },  /* Super+Shift+B: open btop */
+ 	{ MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_d,		  spawn,	    {.v = clockcmd} },  /* Super+Shift+D: open clock */
+-	{ MODKEY,                    XKB_KEY_r,           spawn,            {.v = wlaunch} },  /* Super+R: application launcher */
++	{ MODKEY,                    XKB_KEY_space,       spawn,            {.v = wlaunch} },  /* Super+Space: application launcher (rofi) */
++	{ MODKEY,                    XKB_KEY_r,           spawn,            {.v = wlaunch} },  /* Super+R: application launcher (rofi) */
+ 	{ MODKEY,                    XKB_KEY_z,		  zoomfit,	    {0} },  /* Super+Z: zoom out to fit all windows */
+-	{ MODKEY,                    XKB_KEY_q,           spawn,            {.v = termcmd} },  /* Super+Q: open terminal */
++	{ MODKEY,                    XKB_KEY_q,           killclient,       {0} },  /* Super+Q: close focused window */
+ 	{ MODKEY,                    XKB_KEY_Tab,         focusstackcenter,       {.i = +1} },  /* Super+Tab: focus next window and center the view on it */
+ 	{ MODKEY,                    XKB_KEY_k,           focusstackcenter,       {.i = -1} },  /* Super+K: focus previous window and center the view on it */
+ 	{ MODKEY,                    XKB_KEY_c,           killclient,       {0} },  /* Super+C: close focused window */
+@@ -111,7 +112,7 @@ static const Button buttons[] = {
+ 	{ ClkClient, MODKEY|WLR_MODIFIER_SHIFT, BTN_LEFT, movecanvasmouse, {.f = 1} },  /* Super+Shift+left drag on a window: pan the canvas */
+ 	{ ClkRoot, MODKEY|WLR_MODIFIER_SHIFT, BTN_LEFT, movecanvasmouse, {.f = 1} },  /* Super+Shift+left drag on empty canvas: pan the canvas */
+ 	{ ClkRoot, 0, BTN_LEFT, movecanvasmouse, {.f = 1} },  /* left drag on empty canvas: pan the canvas */
+-	{ ClkRoot, 0, BTN_RIGHT, spawn, {.v = termcmd} },  /* right click on empty canvas: open terminal */
++	{ ClkRoot, 0, BTN_RIGHT, spawnregioncmd, {.v = termcmd} },  /* hold right click on empty canvas and drag: open a terminal inside the dragged rectangle */
+ 	{ ClkTagBar, 0,         BTN_LEFT,   view,       {0} },  /* left click on a tag: view it */
+ 	{ ClkTagBar, 0,         BTN_RIGHT,  toggleview, {0} },  /* right click on a tag: toggle it in the current view */
+ 	{ ClkTagBar, MODKEY,    BTN_LEFT,   tag,        {0} },  /* Super+left click on a tag: move the focused window there */

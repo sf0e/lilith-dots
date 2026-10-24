@@ -1,0 +1,235 @@
+diff --git a/src/lilith.c b/src/lilith.c
+index 7f80322..cf92556 100644
+--- a/src/lilith.c
++++ b/src/lilith.c
+@@ -11,6 +11,7 @@
+ #include <unistd.h>
+ #include <wayland-server-core.h>
+ #include <wlr/backend.h>
++#include <wlr/backend/interface.h>
+ #include <wlr/backend/libinput.h>
+ #include <wlr/render/allocator.h>
+ #include <wlr/render/wlr_renderer.h>
+@@ -46,6 +47,9 @@
+ #include <wlr/types/wlr_relative_pointer_v1.h>
+ #include <wlr/types/wlr_scene.h>
+ #include <wlr/types/wlr_screencopy_v1.h>
++#include <wlr/types/wlr_ext_foreign_toplevel_list_v1.h>
++#include <wlr/types/wlr_ext_image_capture_source_v1.h>
++#include <wlr/types/wlr_ext_image_copy_capture_v1.h>
+ #include <wlr/types/wlr_seat.h>
+ #include <wlr/types/wlr_server_decoration.h>
+ #include <wlr/types/wlr_session_lock_v1.h>
+@@ -60,6 +64,8 @@
+ #include <wlr/types/wlr_xdg_output_v1.h>
+ #include <wlr/types/wlr_xdg_shell.h>
+ #include <wlr/util/log.h>
++#include <wlr/interfaces/wlr_ext_image_capture_source_v1.h>
++#include <wlr/interfaces/wlr_output.h>
+ #include <wlr/util/region.h>
+ #include <xkbcommon/xkbcommon.h>
+ #ifdef XWAYLAND
+@@ -159,6 +165,9 @@ typedef struct {
+ 	int opening;
+ 	int was_vis;
+ 	struct wlr_scene_tree *open_tree;
++	struct wlr_ext_foreign_toplevel_handle_v1 *foreign_toplevel;
++	struct wlr_scene *capture_scene;
++	struct wlr_ext_image_capture_source_v1 *capture_source;
+ } Client;
+ 
+ typedef struct {
+@@ -333,6 +342,29 @@ typedef struct {
+ 	const Arg arg;
+ } TabletButton;
+ 
++struct capture_source {
++	struct wlr_ext_image_capture_source_v1 base;
++
++	struct wlr_scene_node *node;
++	Client *client;
++
++	struct wlr_backend backend;
++	struct wlr_output output;
++	struct wlr_scene_output *scene_output;
++
++	size_t num_started;
++
++	struct wl_listener node_destroy;
++	struct wl_listener scene_output_destroy;
++	struct wl_listener output_frame;
++};
++
++struct capture_source_frame_event {
++	struct wlr_ext_image_capture_source_v1_frame_event base;
++	struct wlr_buffer *buffer;
++	struct timespec when;
++};
++
+ static void applybounds(Client *c, struct wlr_box *bbox);
+ static void applyrules(Client *c);
+ static void arrange(Monitor *m);
+@@ -491,6 +523,8 @@ static void canvas_inertia_step(Monitor *m);
+ static void popup_zoom_commit(struct wl_listener *listener, void *data);
+ static void popup_zoom_destroy(struct wl_listener *listener, void *data);
+ static void spawnregion(const Arg *arg);
++static void spawnregioncmd(const Arg *arg);
++static void spawnregion_begin(void);
+ static void spawnregion_update_rect(void);
+ static void spawnregion_finish(void);
+ static void createtablet(struct wlr_input_device *device);
+@@ -550,6 +584,8 @@ static struct wlr_virtual_pointer_manager_v1 *virtual_pointer_mgr;
+ static struct wlr_cursor_shape_manager_v1 *cursor_shape_mgr;
+ static struct wlr_output_power_manager_v1 *power_mgr;
+ 
++static struct wlr_ext_foreign_toplevel_list_v1 *foreign_toplevel_list;
++
+ static struct wlr_pointer_constraints_v1 *pointer_constraints;
+ static struct wlr_pointer_gestures_v1 *pointer_gestures;
+ static struct wlr_relative_pointer_manager_v1 *relative_pointer_mgr;
+@@ -593,6 +629,7 @@ static struct wlr_scene_rect *spawnregion_rect = NULL;
+ static struct wlr_box pending_spawn_geo = {0};
+ static int has_pending_spawn_geo = 0;
+ Client *waiting_geo_client = NULL;
++static const char *const *spawnregion_cmd = NULL;
+ 
+ static struct wlr_output_layout *output_layout;
+ static struct wlr_box sgeom;
+@@ -890,38 +927,7 @@ buttonpress(struct wl_listener *listener, void *data)
+ 			spawnregion_y1 = cursor->y;
+ 			spawnregion_x2 = cursor->x;
+ 			spawnregion_y2 = cursor->y;
+-#if SPAWNREGION_STYLE == 2
+-			{
+-				int i;
+-				for (i = 0; i < 4; i++) {
+-					if (!spawnregion_border[i]) {
+-						const float *oc = spawnregion_outer_border_color;
+-						spawnregion_border[i] = wlr_scene_rect_create(layers[LyrBlock],
+-							1, 1, (float[4]){oc[0], oc[1], oc[2], oc[3]});
+-					}
+-				}
+-				for (i = 4; i < 8; i++) {
+-					if (!spawnregion_border[i]) {
+-						const float *ic = spawnregion_inner_border_color;
+-						spawnregion_border[i] = wlr_scene_rect_create(layers[LyrBlock],
+-							1, 1, (float[4]){ic[0], ic[1], ic[2], ic[3]});
+-					}
+-				}
+-			}
+-#else
+-			if (!spawnregion_rect)
+-#  if SPAWNREGION_STYLE == 1
+-				spawnregion_rect = wlr_scene_rect_create(layers[LyrBlock],
+-					1, 1, (float[4])SPAWNREGION_COLOR);
+-#  else
+-				spawnregion_rect = wlr_scene_rect_create(layers[LyrBlock],
+-					1, 1, (float[4]){0.2f, 0.5f, 1.0f, 0.0f});
+-#  endif
+-			wlr_scene_node_set_position(&spawnregion_rect->node,
+-				(int)spawnregion_x1, (int)spawnregion_y1);
+-			wlr_scene_rect_set_size(spawnregion_rect, 1, 1);
+-			wlr_scene_node_set_enabled(&spawnregion_rect->node, 1);
+-#endif
++			spawnregion_begin();
+ 			cursor_mode = CurSpawnRegion;
+ 			return;
+ 		}
+@@ -4603,7 +4609,9 @@ createnotifyx11(struct wl_listener *listener, void *data)
+ 	c = xsurface->data = ecalloc(1, sizeof(*c));
+ 	c->surface.xwayland = xsurface;
+ 	c->type = X11;
+-	c->bw = client_is_unmanaged(c) ? 0 : innerborderpx;
++	c->ibw = innerborderpx;
++	c->obw = outerborderpx;
++	c->bw = client_is_unmanaged(c) ? 0 : (innerborderpx + outerborderpx);
+ 
+ 	LISTEN(&xsurface->events.associate, &c->associate, associatex11);
+ 	LISTEN(&xsurface->events.destroy, &c->destroy, destroynotify);
+@@ -5755,6 +5763,11 @@ coords_done:
+ 			focusclient(waiting_geo_client, 1);
+ 			waiting_geo_client = NULL;
+ 		}
++		if (spawnregion_cmd) {
++			const char *const *cmd = spawnregion_cmd;
++			spawnregion_cmd = NULL;
++			spawn(&(Arg){ .v = (const void *)cmd });
++		}
+ 		return;
+ 	}
+ 
+@@ -5774,6 +5787,10 @@ coords_done:
+ 
+ 		waiting_geo_client = NULL;
+ 		has_pending_spawn_geo = 0;
++	} else if (spawnregion_cmd) {
++		const char *const *cmd = spawnregion_cmd;
++		spawnregion_cmd = NULL;
++		spawn(&(Arg){ .v = (const void *)cmd });
+ 	}
+ }
+ 
+@@ -5792,6 +5809,63 @@ spawnregion(const Arg *arg)
+ 	wlr_cursor_set_xcursor(cursor, cursor_mgr, "crosshair");
+ }
+ 
++void
++spawnregion_begin(void)
++{
++#if SPAWNREGION_STYLE == 2
++	{
++		int i;
++		for (i = 0; i < 4; i++) {
++			if (!spawnregion_border[i]) {
++				const float *oc = spawnregion_outer_border_color;
++				spawnregion_border[i] = wlr_scene_rect_create(layers[LyrBlock],
++					1, 1, (float[4]){oc[0], oc[1], oc[2], oc[3]});
++			}
++		}
++		for (i = 4; i < 8; i++) {
++			if (!spawnregion_border[i]) {
++				const float *ic = spawnregion_inner_border_color;
++				spawnregion_border[i] = wlr_scene_rect_create(layers[LyrBlock],
++					1, 1, (float[4]){ic[0], ic[1], ic[2], ic[3]});
++			}
++		}
++	}
++#else
++	if (!spawnregion_rect)
++#  if SPAWNREGION_STYLE == 1
++		spawnregion_rect = wlr_scene_rect_create(layers[LyrBlock],
++			1, 1, (float[4])SPAWNREGION_COLOR);
++#  else
++		spawnregion_rect = wlr_scene_rect_create(layers[LyrBlock],
++			1, 1, (float[4]){0.2f, 0.5f, 1.0f, 0.0f});
++#  endif
++	wlr_scene_node_set_position(&spawnregion_rect->node,
++		(int)spawnregion_x1, (int)spawnregion_y1);
++	wlr_scene_rect_set_size(spawnregion_rect, 1, 1);
++	wlr_scene_node_set_enabled(&spawnregion_rect->node, 1);
++#endif
++}
++
++void
++spawnregioncmd(const Arg *arg)
++{
++	if (!selmon)
++		return;
++	if (cursor_mode != CurNormal && cursor_mode != CurPressed)
++		return;
++
++	spawnregion_active = 1;
++	has_pending_spawn_geo = 0;
++	spawnregion_cmd = (const char *const *)arg->v;
++	spawnregion_x1 = cursor->x;
++	spawnregion_y1 = cursor->y;
++	spawnregion_x2 = cursor->x;
++	spawnregion_y2 = cursor->y;
++	spawnregion_begin();
++	cursor_mode = CurSpawnRegion;
++	wlr_cursor_set_xcursor(cursor, cursor_mgr, "crosshair");
++}
++
+ void
+ createtablet(struct wlr_input_device *device)
+ {

@@ -1,0 +1,51 @@
+diff --git a/config/config_bar.h b/config/config_bar.h
+index 63e23e4..eabc3f4 100644
+--- a/config/config_bar.h
++++ b/config/config_bar.h
+@@ -150,25 +150,25 @@ static const char *baricon_layout  = ICO_LAYOUT;  /* keyboard layout */
+  * The accent is used for tag decorations and occupied indicators;
+  * 0 = use the foreground color. A background alpha of 00 is transparent. */
+ static const uint32_t barcolors[SchemeCount][3] = {
+-	[SchemeNorm]      = { 0xbbbbbbff, 0x222222ff, 0 },  /* tag: normal */
+-	[SchemeSel]       = { 0xeeeeeeff, 0x005577ff, 0 },  /* tag: selected */
+-	[SchemeUrg]       = { 0xeeeeeeff, 0xff0000ff, 0 },  /* tag: urgent */
+-	[SchemeOcc]       = { 0xeeeeeeff, 0x222222ff, 0 },  /* tag: occupied (see baroccscheme) */
+-	[SchemeBar]       = { 0xbbbbbbff, 0x222222ff, 0 },  /* bar background */
+-	[SchemeStatus]    = { 0xbbbbbbff, 0x00000000, 0 },  /* status text */
+-	[SchemeSep]       = { 0x777777ff, 0x444444ff, 0 },  /* module separators */
+-	[SchemeBorder]    = { 0,          0x005577ff, 0 },  /* bar border (background value is the border color) */
+-	[SchemeVolume]    = { 0xbbbbbbff, 0x00000000, 0 },  /* volume module */
+-	[SchemeMuted]     = { 0x777777ff, 0x00000000, 0 },  /* volume module while muted */
+-	[SchemeBrightness]= { 0xbbbbbbff, 0x00000000, 0 },  /* brightness module */
+-	[SchemeBattery]   = { 0xbbbbbbff, 0x00000000, 0 },  /* battery module */
+-	[SchemeBatChg]    = { 0xeeeeeeff, 0x00000000, 0 },  /* battery module while charging */
+-	[SchemeBatLow]    = { 0xeeeeeeff, 0xff0000ff, 0 },  /* battery module below barbatwarn */
+-	[SchemeCpu]       = { 0xbbbbbbff, 0x00000000, 0 },  /* CPU module */
+-	[SchemeCpuWarn]   = { 0xeeeeeeff, 0xff0000ff, 0 },  /* CPU module above barcpuwarn */
+-	[SchemeRam]       = { 0xbbbbbbff, 0x00000000, 0 },  /* RAM module */
+-	[SchemeRamWarn]   = { 0xeeeeeeff, 0xff0000ff, 0 },  /* RAM module above barramwarn */
+-	[SchemeTemp]      = { 0xbbbbbbff, 0x00000000, 0 },  /* temperature module */
+-	[SchemeTempWarn]  = { 0xeeeeeeff, 0xff0000ff, 0 },  /* temperature module above bartempwarn */
+-	[SchemeLayout]    = { 0xbbbbbbff, 0x00000000, 0 },  /* keyboard layout module */
++	[SchemeNorm]      = { 0xd9b8c0ff, 0x1a0f12ff, 0 },  /* tag: normal */
++	[SchemeSel]       = { 0xf5e4e8ff, 0xe07a8eff, 0 },  /* tag: selected */
++	[SchemeUrg]       = { 0xf5e4e8ff, 0xff3b5cff, 0 },  /* tag: urgent */
++	[SchemeOcc]       = { 0xe8c9d0ff, 0x241519ff, 0 },  /* tag: occupied (see baroccscheme) */
++	[SchemeBar]       = { 0xd9b8c0ff, 0x1a0f12ff, 0 },  /* bar background */
++	[SchemeStatus]    = { 0xd9b8c0ff, 0x00000000, 0 },  /* status text */
++	[SchemeSep]       = { 0x9c7a83ff, 0x2a1a1fff, 0 },  /* module separators */
++	[SchemeBorder]    = { 0,          0xe07a8eff, 0 },  /* bar border (background value is the border color) */
++	[SchemeVolume]    = { 0xd9b8c0ff, 0x00000000, 0 },  /* volume module */
++	[SchemeMuted]     = { 0x9c7a83ff, 0x00000000, 0 },  /* volume module while muted */
++	[SchemeBrightness]= { 0xd9b8c0ff, 0x00000000, 0 },  /* brightness module */
++	[SchemeBattery]   = { 0xd9b8c0ff, 0x00000000, 0 },  /* battery module */
++	[SchemeBatChg]    = { 0xf5e4e8ff, 0x00000000, 0 },  /* battery module while charging */
++	[SchemeBatLow]    = { 0xf5e4e8ff, 0xff3b5cff, 0 },  /* battery module below barbatwarn */
++	[SchemeCpu]       = { 0xd9b8c0ff, 0x00000000, 0 },  /* CPU module */
++	[SchemeCpuWarn]   = { 0xf5e4e8ff, 0xff3b5cff, 0 },  /* CPU module above barcpuwarn */
++	[SchemeRam]       = { 0xd9b8c0ff, 0x00000000, 0 },  /* RAM module */
++	[SchemeRamWarn]   = { 0xf5e4e8ff, 0xff3b5cff, 0 },  /* RAM module above barramwarn */
++	[SchemeTemp]      = { 0xd9b8c0ff, 0x00000000, 0 },  /* temperature module */
++	[SchemeTempWarn]  = { 0xf5e4e8ff, 0xff3b5cff, 0 },  /* temperature module above bartempwarn */
++	[SchemeLayout]    = { 0xd9b8c0ff, 0x00000000, 0 },  /* keyboard layout module */
+ };

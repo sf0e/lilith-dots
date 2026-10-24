@@ -1,0 +1,13 @@
+diff --git a/config/config_input.h b/config/config_input.h
+index f1d7f13..86cd60a 100644
+--- a/config/config_input.h
++++ b/config/config_input.h
+@@ -33,7 +33,7 @@ static const enum libinput_config_click_method click_method = LIBINPUT_CONFIG_CL
+ static const uint32_t send_events_mode = LIBINPUT_CONFIG_SEND_EVENTS_ENABLED;
+ 
+ /* Pointer acceleration profile: ADAPTIVE (speed-dependent) or FLAT (constant). */
+-static const enum libinput_config_accel_profile accel_profile = LIBINPUT_CONFIG_ACCEL_PROFILE_ADAPTIVE;
++static const enum libinput_config_accel_profile accel_profile = LIBINPUT_CONFIG_ACCEL_PROFILE_FLAT;
+ static const double accel_speed = 0;  /* pointer speed from -1.0 (slowest) to 1.0 (fastest) */
+ 
+ /* Tap button mapping: LRM = 1/2/3-finger tap gives left/right/middle, LMR = left/middle/right. */
