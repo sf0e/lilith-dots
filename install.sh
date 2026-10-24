@@ -41,18 +41,31 @@ TMP="$(mktemp -d)"
 trap 'kill "$KEEPER" 2>/dev/null || true; rm -rf "$TMP"' EXIT INT TERM
 
 info "fetching $REPO"
+TARBALL="$TMP/src.tar.gz"
+mkdir "$TMP/src"
 if command -v curl >/dev/null 2>&1; then
-	curl -fsSL "https://github.com/$REPO/archive/refs/heads/$BRANCH.tar.gz" | tar -xz --warning=no-timestamp -C "$TMP"
+	curl -fsSL "https://github.com/$REPO/archive/refs/heads/$BRANCH.tar.gz" -o "$TARBALL"
 else
-	wget -qO- "https://github.com/$REPO/archive/refs/heads/$BRANCH.tar.gz" | tar -xz --warning=no-timestamp -C "$TMP"
+	wget -q "https://github.com/$REPO/archive/refs/heads/$BRANCH.tar.gz" -O "$TARBALL"
 fi
-SRC="$TMP/$(ls "$TMP")"
+if tar -xzf "$TARBALL" --warning=no-timestamp --strip-components=1 -C "$TMP/src" 2>"$TMP/tar.err"; then
+	grep -v 'in the future' "$TMP/tar.err" >&2 || true
+else
+	cat "$TMP/tar.err" >&2
+	die "failed to extract $REPO"
+fi
+rm -f "$TARBALL"
+SRC="$TMP/src"
 
 # --- emerge the package list ---
 if command -v emerge >/dev/null 2>&1; then
 	PKGS="$(grep -Ev '^\s*(#|$)' "$SRC/packages.list" | tr '\n' ' ')"
 	info "emerging: $PKGS"
-	$ESC emerge -av $PKGS
+	if [ -t 0 ]; then
+		$ESC emerge -av $PKGS
+	else
+		$ESC emerge -v --ask=n $PKGS
+	fi
 else
 	warn "skipping package install: emerge not found"
 fi
