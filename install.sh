@@ -42,9 +42,9 @@ trap 'kill "$KEEPER" 2>/dev/null || true; rm -rf "$TMP"' EXIT INT TERM
 
 info "fetching $REPO"
 if command -v curl >/dev/null 2>&1; then
-	curl -fsSL "https://github.com/$REPO/archive/refs/heads/$BRANCH.tar.gz" | tar -xz -C "$TMP"
+	curl -fsSL "https://github.com/$REPO/archive/refs/heads/$BRANCH.tar.gz" | tar -xz --warning=no-timestamp -C "$TMP"
 else
-	wget -qO- "https://github.com/$REPO/archive/refs/heads/$BRANCH.tar.gz" | tar -xz -C "$TMP"
+	wget -qO- "https://github.com/$REPO/archive/refs/heads/$BRANCH.tar.gz" | tar -xz --warning=no-timestamp -C "$TMP"
 fi
 SRC="$TMP/$(ls "$TMP")"
 
